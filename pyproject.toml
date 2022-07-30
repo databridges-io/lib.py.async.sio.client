@@ -1,0 +1,23 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "databridges_sio_client_lib"
+authors = [{name = "Optomate Technologies Private Limited.", email = "tech@optomate.io"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["optomate","databridges","pubsub","rpc","websocket","socket.io","ws","events","realtime","real-time"]
+classifiers = ["License :: OSI Approved :: Apache Software License"]
+dynamic = ["version", "description"]
+dependencies = [
+    "python-socketio==3.1.2",
+    "python-engineio==3.14.0",
+    'asyncio>=3.4.3',
+    'aiohttp>=3.8.1',
+    'websocket-client',
+]
+
+[project.urls]
+Documentation = "https://github.com/databridges-io/lib.py.async.sio.client"
+Source = "https://github.com/databridges-io/lib.py.async.sio.client"
