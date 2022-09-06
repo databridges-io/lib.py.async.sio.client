@@ -5,6 +5,14 @@
 
 DataBridges makes it easy for connected devices and applications to communicate with each other in realtime in an efficient, fast, reliable and trust-safe manner. Databridges Python client library allows you to easily add realtime capabilities to your applications in record time.
 
+## Have you registered with dataBridges?
+
+Registering allows you to access our production grade PlayGround network. You can take dataBridges for a spin and quickly create, test your proof of concepts without needing to create a payment account.
+
+We would love to see what you build on dataBridges platform. We are available at tech@optomate.io to answer all your queries.
+
+https://www.databridges.io/developers.html
+
 ## Usage Overview
 
 The following topics are covered:
