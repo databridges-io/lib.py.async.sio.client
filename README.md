@@ -43,6 +43,7 @@ The following topics are covered:
 - [object:Cf (Client Function)](#objectcf-client-function)
   - [Properties](#properties)
   - [System events for cf object](#system-events-for-cf-object)
+- [Rate Limit and Concurrent connection](#rate-limit-and-concurrent-connection)
 - [Change Log](#change-log)
 - [License](#license)
 
@@ -190,7 +191,7 @@ print(dbridge.connectionstate.reconnect_attempt)
 | *connecting*       | Your application is now attempting to connect to dataBridges network. |
 | *connected*        | The connection to dataBridges network is open and authenticated with your `appkey`. |
 | *connection_break* | Indicates a network disconnection between application and dataBridges network. The library will initiate an automatic reconnection, if the reconnection property is set as true. |
-| *connect_error*    | The dataBridges network connection was previously connected and has now errored and closed. |
+| *connect_error*    | This event will show system messages related to dataBridges network as well as Rate-limit exceptions (details in Rate-limit section). |
 | *disconnected*     | The application is now disconnected from the dataBridges network. The application will than need to initiate fresh connection attempt again. |
 | *reconnecting*     | Your application is now attempting to reconnect to dataBridges network as per properties set for reconnection. |
 | *reconnect_error*  | Reconnection attempt has errored.                            |
@@ -1685,6 +1686,82 @@ except dBError as e:
 | Source        | Code                      | Description                                                  |
 | ------------- | ------------------------- | ------------------------------------------------------------ |
 | DBNET_CF_CALL | ERR_CALLEE_QUEUE_EXCEEDED | No new cf calls are being routed by the dataBridges network to the application because the application's current cf processing queue has already exceeded. <br />Each application connection cannot exceed cf.queue.maximum. Refer to management console documentation for cf.queue.maximum details. |
+
+## Rate Limit and Concurrent connection
+
+dataBridges implements both messages rate-limiting and max number of concurrent connections.
+
+### Messages rate-limits 
+
+Messages rate-limits are applicable at socket connection level and at overall level (aggregate messages consumption). For sockets message the rate limits are at per second and per minute level whereas overall rate-limit is at per hour, per day, per month level.
+
+- Check your account limits to understand what rate-limits are applicable to you or contact your account manager.
+- Default socket level rate limits are 10 messages / second per connections.
+
+#### What happens when the rate limit is exceeded?
+
+Once the rate-limit is exceeded, all further channel messages as well as RPC and CF calls are not processed by the system.
+
+> *Note:* Do note publishing messages or executing RPC and CF calls post rate-limit exceeding will increase your message consumption.
+
+##### Events you can bind to get notified about rate-limit exceeded and restored
+
+The connectionstatus object allows you to bind for event `connect_error`.
+When the rate-limit is exceeded or restored you will get the following payload.code
+
+- `ERR_socket_ratelimit_exceeded`
+- `ERR_ratelimit_exceeded`
+- `ERR_ratelimit_restored`
+
+Take a look at the attached code-set to manage how to get notified about limit exceeded conditions.
+
+##### What is rate limit restored?
+
+When overall rate-limits are exceeded (hour, day, month), system will notify rate-limit restored once the new time-window is entered. Do note, rate limit restored is not sent for per second and per minute rate-limiters.
+
+### Concurrent Connection limits
+
+Each purchase has an concurrent limit connection. *Check your account limits to understand what concurrent connections limits are applicable to you or contact your account manager.*
+
+#### What happens when the concurrent connection limit is exceeded?
+
+The system will disconnect excess connection and before that it will send a notification to the connection that the limit has been exceeded and the connection will be closed.
+
+<h4> Events you can bind to get notified about concurrent connection limit exceeded </h4>
+
+The connectionstatus object allows you to bind for event `connect_error`.
+When the concurrent connection limit is exceeded you will get the following payload.code
+
+- `ERR_concurrent_connection_limit`
+
+Take a look at the attached code-set to manage how to get notified about limit exceeded conditions.
+
+### Code-set to get notified and take further action
+
+You can add the below code-set to your program to get notified and take further action.
+
+```python
+self.dbridge.connectionstate.bind("connect_error", self.connecterror)
+
+async def connecterror(self, payload):
+    try:
+        if payload.code == "ERR_socket_ratelimit_exceeded":
+            print("Socket ratelimit Exceeded")
+            return
+        elif payload.code == "ERR_ratelimit_exceeded":
+            print("Customer ratelimit Exceeded ", payload.message)
+            return
+        elif payload.code == "ERR_ratelimit_restored":
+            print("Customer ratelimit Restored ")
+            return
+        elif payload.code == "ERR_concurrent_connection_limit":
+            print("Customer Connection limit Exceeded.")
+            return
+        else:
+            print("connect_error ", payload.code, payload.message)
+    except Exception as e:
+        print(e)
+```
 
 
 
